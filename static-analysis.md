@@ -41,13 +41,7 @@ Cppcheck Premium 26.9.0, `--premium=bughunting --enable=warning,style,performanc
 | error    | premium-bughuntingUninit                  | tasks.c                    | 3668 | Cannot determine that 'uxIdleTaskStackSize' is initialized                                  | `uxIdleTaskStackSize` is uninitialized and only set by the application's `vApplicationGetIdleTaskMemory()`. A hook that skips it passes garbage to `xTaskCreateStatic`.                                                   |
 | error    | premium-bughuntingUninit                  | timers.c                   | 294  | Cannot determine that 'uxTimerTaskStackSize' is initialized                                 | Same pattern with `vApplicationGetTimerTaskMemory()`.                                                                                                                                                                  |
 
-Excluded as guaranteed false positives:
 
-- **nullPointerRedundantCheck (55):** every one follows a `configASSERT(p != NULL)` (or `configASSERT(p)`). In this config, `configASSERT` disables interrupts and loops forever, so the dereference can't be reached with NULL. These replace the free Cppcheck `ctunullpointer` hits at `list.c:150` and `stream_buffer.c:1018`/`1583`.
-- **arrayIndexOutOfBounds `tasks.c:3604` / arrayIndexOutOfBoundsCond `tasks.c:5273`:** same as free Cppcheck. The idle-name loop breaks on the NUL at index 4, and `taskSELECT_HIGHEST_PRIORITY_TASK` asserts `uxTopPriority` before decrementing.
-- **bughuntingUninit / UninitNonConstArg (other 31):** output parameters filled by the callee (`prvGetNextExpireTime`, `prvSampleTimeNow`, `prvReadBytesFromBuffer`), buffers zeroed by `memset` right after allocation, `pvObjectList` set before `WaitForMultipleObjects`, `(void) ulErrorCode` casts, and `pxCurrentTCB`'s first word (always `pxTopOfStack`).
-- **bughunting pointer/buffer overflow in `heap_4.c`, `queue.c`, `stream_buffer.c`, `tasks.c:1298`/`5259`:** each one is guarded, by `heapADD_WILL_OVERFLOW`/`heapSUBTRACT_WILL_UNDERFLOW`, the `SIZE_MAX / uxLength` check in `xQueueGenericReset`, the `configASSERT` bounds before each `memcpy`, the `sizeof(StaticTask_t) == sizeof(TCB_t)` assert, or the minimum stack size.
-- **style (37):** `variableScope`, `constVariablePointer`, `unusedStructMember` and similar. These aren't errors.
 
 ## clang-tidy
 
